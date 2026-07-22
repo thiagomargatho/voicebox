@@ -8,9 +8,16 @@ sqlalchemy>=2.0.0
 alembic>=1.13.0
 
 # ML models
-torch>=2.2.0
-transformers>=4.36.0,<=4.57.6
-accelerate>=0.26.0
+# Pinned (2026-07-13): unbounded torch/transformers/accelerate resolved to
+# torch==2.13.0 + transformers==4.57.3 + accelerate==1.12.0, which broke CPU
+# inference for every engine tested (Kokoro/LuxTTS: "Cannot copy out of meta
+# tensor"; Qwen: "unsupported scalarType" in torch.autocast). transformers AND
+# accelerate CANNOT be pinned lower — qwen-tts (all versions) hard-requires
+# ==4.57.3 / ==1.12.0 exactly, pip refuses to resolve otherwise. torch is the
+# only lever left; hume-tada (installed --no-deps below) wants torch>=2.7,<2.8.
+torch==2.7.1
+transformers==4.57.3
+accelerate==1.12.0
 huggingface_hub>=0.20.0
 qwen-tts>=0.0.5
 
@@ -38,7 +45,7 @@ pyloudnorm
 # descript-audio-codec is NOT installed — it pulls onnx/tensorboard
 # via descript-audiotools.  A lightweight shim in utils/dac_shim.py
 # provides the only class TADA uses: Snake1d.)
-torchaudio
+torchaudio==2.7.1
 
 # Kokoro TTS (lightweight 82M-param engine)
 kokoro>=0.9.4
