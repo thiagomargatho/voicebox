@@ -8,10 +8,18 @@ services:
     container_name: voicebox
     restart: unless-stopped
 
+    # Docker cria /home/voicebox/.cache (pai do volume HF) como root a cada
+    # recreate; o app roda como uid 999 e perde escrita fora do huggingface.
+    # Chown não-recursivo antes do entrypoint original (roda como root, gosu depois).
+    entrypoint: ["sh", "-c", "chown voicebox:voicebox /home/voicebox/.cache /home/voicebox/.cache/huggingface; exec /usr/local/bin/entrypoint.sh \"$@\"", "--"]
+    # Sobrescrever entrypoint no compose descarta o CMD da imagem — redeclarar:
+    command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "17493"]
+
     ports:
       # Host-side moved to 17600 so the dev/installed Voicebox can keep 17493.
       # Container still listens on its native port internally.
-      - "127.0.0.1:17600:17493"
+      # Bound to all interfaces so it's reachable via WireGuard/Tailscale/LAN IP.
+      - "17600:17493"
 
     volumes:
       # Bind-mount for generated audio (customize the host path as needed)
@@ -36,7 +44,7 @@ services:
       resources:
         limits:
           cpus: '4'
-          memory: 8G
+          memory: 12G
 
 networks:
   voicebox-net:
