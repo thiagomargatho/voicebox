@@ -2,10 +2,43 @@
 Audio processing utilities.
 """
 
+import subprocess
+import tempfile
+from pathlib import Path
+
 import numpy as np
 import soundfile as sf
 import librosa
 from typing import Tuple, Optional
+
+
+def convert_audio_format(source_path: str, target_format: str) -> bytes:
+    """
+    Transcode an audio file to mp3/ogg via the ffmpeg binary already bundled
+    in the runtime image (used instead of soundfile because libsndfile's MP3
+    write support is inconsistent across builds).
+
+    Args:
+        source_path: Path to the source audio file (any ffmpeg-readable format)
+        target_format: Target container/codec, e.g. "mp3" or "ogg"
+
+    Returns:
+        Encoded audio bytes.
+
+    Raises:
+        subprocess.CalledProcessError: If ffmpeg fails.
+    """
+    with tempfile.NamedTemporaryFile(suffix=f".{target_format}", delete=False) as tmp:
+        tmp_path = Path(tmp.name)
+    try:
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", source_path, "-vn", str(tmp_path)],
+            check=True,
+            capture_output=True,
+        )
+        return tmp_path.read_bytes()
+    finally:
+        tmp_path.unlink(missing_ok=True)
 
 
 def normalize_audio(

@@ -31,6 +31,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -214,9 +217,13 @@ export function HistoryTable() {
     }
   };
 
-  const handleDownloadAudio = (generationId: string, text: string) => {
+  const handleDownloadAudio = (
+    generationId: string,
+    text: string,
+    format: 'wav' | 'mp3' | 'ogg' = 'wav',
+  ) => {
     exportGenerationAudio.mutate(
-      { generationId, text },
+      { generationId, text, format },
       {
         onError: (error) => {
           toast({
@@ -656,13 +663,29 @@ export function HistoryTable() {
                               <Play className="mr-2 h-4 w-4" />
                               {t('history.actions.play')}
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDownloadAudio(gen.id, gen.text)}
-                              disabled={exportGenerationAudio.isPending}
-                            >
-                              <Download className="mr-2 h-4 w-4" />
-                              {t('history.actions.exportAudio')}
-                            </DropdownMenuItem>
+                            <DropdownMenuSub>
+                              <DropdownMenuSubTrigger disabled={exportGenerationAudio.isPending}>
+                                <Download className="mr-2 h-4 w-4" />
+                                {t('history.actions.exportAudio')}
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                <DropdownMenuItem
+                                  onClick={() => handleDownloadAudio(gen.id, gen.text, 'wav')}
+                                >
+                                  {t('history.actions.exportWav')}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDownloadAudio(gen.id, gen.text, 'mp3')}
+                                >
+                                  {t('history.actions.exportMp3')}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDownloadAudio(gen.id, gen.text, 'ogg')}
+                                >
+                                  {t('history.actions.exportOgg')}
+                                </DropdownMenuItem>
+                              </DropdownMenuSubContent>
+                            </DropdownMenuSub>
                             <DropdownMenuItem
                               onClick={() => handleExportPackage(gen.id, gen.text)}
                               disabled={exportGeneration.isPending}

@@ -650,6 +650,9 @@
       "menu": "Actions",
       "play": "Play",
       "exportAudio": "Export Audio",
+      "exportWav": "WAV",
+      "exportMp3": "MP3",
+      "exportOgg": "OGG",
       "exportPackage": "Export Package",
       "applyEffects": "Apply Effects",
       "regenerate": "Regenerate"

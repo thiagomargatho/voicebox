@@ -1,15 +1,17 @@
 """Generation history endpoints."""
 
 import io
+import subprocess
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from fastapi.responses import FileResponse, Response, StreamingResponse
 from sqlalchemy.orm import Session
 
 from .. import config, models
 from ..services import export_import, history
 from ..app import safe_content_disposition
 from ..database import Generation as DBGeneration, VoiceProfile as DBVoiceProfile, get_db
+from ..utils.audio import convert_audio_format
 
 router = APIRouter()
 
@@ -162,12 +164,23 @@ async def export_generation(
     )
 
 
+_EXPORT_AUDIO_MEDIA_TYPES = {"wav": "audio/wav", "mp3": "audio/mpeg", "ogg": "audio/ogg"}
+
+
 @router.get("/history/{generation_id}/export-audio")
 async def export_generation_audio(
     generation_id: str,
+    format: str = Query("wav"),
     db: Session = Depends(get_db),
 ):
-    """Export only the audio file from a generation."""
+    """Export only the audio file from a generation, optionally transcoded."""
+    format = format.lower()
+    if format not in _EXPORT_AUDIO_MEDIA_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported format '{format}'. Allowed: {sorted(_EXPORT_AUDIO_MEDIA_TYPES)}",
+        )
+
     generation = db.query(DBGeneration).filter_by(id=generation_id).first()
     if not generation:
         raise HTTPException(status_code=404, detail="Generation not found")
@@ -184,10 +197,22 @@ async def export_generation_audio(
         safe_text = "generation"
     # Append a short id so exports of similarly-worded generations don't collide
     # on the same filename (the first 30 chars are frequently identical).
-    filename = f"{safe_text}-{generation_id[:8]}.wav"
+    filename = f"{safe_text}-{generation_id[:8]}.{format}"
 
-    return FileResponse(
-        audio_path,
-        media_type="audio/wav",
+    if format == "wav":
+        return FileResponse(
+            audio_path,
+            media_type="audio/wav",
+            headers={"Content-Disposition": safe_content_disposition("attachment", filename)},
+        )
+
+    try:
+        audio_bytes = convert_audio_format(str(audio_path), format)
+    except subprocess.CalledProcessError as exc:
+        raise HTTPException(status_code=500, detail=f"Audio conversion failed: {exc}") from exc
+
+    return Response(
+        content=audio_bytes,
+        media_type=_EXPORT_AUDIO_MEDIA_TYPES[format],
         headers={"Content-Disposition": safe_content_disposition("attachment", filename)},
     )
