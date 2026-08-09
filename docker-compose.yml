@@ -1,4 +1,4 @@
-# Voicebox — CPU build (default)
+# Voicebox — CUDA build, pinned à RTX 4000 Ada (a 3060 já roda Frigate/ComfyUI/kokoro-tts)
 # For AMD ROCm GPU acceleration use the overlay:
 #   docker compose -f docker-compose.yml -f docker-compose.rocm.yml up --build
 
@@ -45,6 +45,11 @@ services:
         limits:
           cpus: '4'
           memory: 12G
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["GPU-9e859e76-cdbe-8f25-49eb-f539186d0bb3"]
+              capabilities: [gpu]
 
 networks:
   voicebox-net:
