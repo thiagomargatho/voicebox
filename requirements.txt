@@ -7,3 +7,6 @@ soundfile
 librosa
 python-multipart
 huggingface_hub
+
+# 0.9.25 (09/09/2026) usa instruções que o Xeon E5-2680 v4 do .69 não tem -> "Illegal instruction" no import
+pedalboard==0.9.24
