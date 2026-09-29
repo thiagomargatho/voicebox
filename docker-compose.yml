@@ -37,8 +37,8 @@ services:
       - LOG_LEVEL=info
       - NUMBA_CACHE_DIR=/tmp/numba_cache
 
-    networks:
-      - voicebox-net
+    # rede padrão: o pool de sub-redes Docker do .69 está esgotado (27/09)
+    network_mode: bridge
 
     deploy:
       resources:
@@ -50,10 +50,6 @@ services:
             - driver: nvidia
               device_ids: ["GPU-9485602e-82eb-19dd-dff1-0cfc070788d9"]
               capabilities: [gpu]
-
-networks:
-  voicebox-net:
-    driver: bridge
 
 volumes:
   voicebox-data:
