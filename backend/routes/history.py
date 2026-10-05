@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from .. import config, models
 from ..services import export_import, history
-from ..app import safe_content_disposition
+from ..utils.http import safe_content_disposition
 from ..database import Generation as DBGeneration, VoiceProfile as DBVoiceProfile, get_db
 from ..utils.audio import convert_audio_format
 

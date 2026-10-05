@@ -8,16 +8,9 @@ sqlalchemy>=2.0.0
 alembic>=1.13.0
 
 # ML models
-# Pinned (2026-07-13): unbounded torch/transformers/accelerate resolved to
-# torch==2.13.0 + transformers==4.57.3 + accelerate==1.12.0, which broke CPU
-# inference for every engine tested (Kokoro/LuxTTS: "Cannot copy out of meta
-# tensor"; Qwen: "unsupported scalarType" in torch.autocast). transformers AND
-# accelerate CANNOT be pinned lower — qwen-tts (all versions) hard-requires
-# ==4.57.3 / ==1.12.0 exactly, pip refuses to resolve otherwise. torch is the
-# only lever left; hume-tada (installed --no-deps below) wants torch>=2.7,<2.8.
-torch==2.7.1
-transformers==4.57.3
-accelerate==1.12.0
+torch>=2.2.0
+transformers>=4.36.0,<=4.57.6
+accelerate>=0.26.0
 huggingface_hub>=0.20.0
 qwen-tts>=0.0.5
 
@@ -45,7 +38,7 @@ pyloudnorm
 # descript-audio-codec is NOT installed — it pulls onnx/tensorboard
 # via descript-audiotools.  A lightweight shim in utils/dac_shim.py
 # provides the only class TADA uses: Snake1d.)
-torchaudio==2.7.1
+torchaudio
 
 # Kokoro TTS (lightweight 82M-param engine)
 kokoro>=0.9.4
@@ -65,13 +58,17 @@ librosa>=0.10.0
 soundfile>=0.12.0
 numpy>=1.24.0,<2.0
 numba>=0.60.0,<0.61.0
-pedalboard==0.9.24  # 0.9.25 (09/09/2026) dá "Illegal instruction" no Xeon E5-2680 v4 do .69 (sem AVX-512)
+# pedalboard>=0.9.21 ships a Linux wheel with AVX-512 (zmm) instructions baked
+# into its native extension, which SIGILLs on import on any CPU without
+# AVX-512 (e.g. Zen 2/3, pre-Ice-Lake Intel). Pin below the regression until
+# upstream fixes it: https://github.com/spotify/pedalboard/issues/454
+pedalboard>=0.9.0,<0.9.21
 
 # HTTP client (for CUDA backend download)
 httpx>=0.27.0
 
 # MCP server (Model Context Protocol) — lets local AI agents call
-# voicebox.speak / .transcribe / .list_captures / .list_profiles
+# voicebox_speak / voicebox_transcribe / voicebox_list_captures / voicebox_list_profiles
 fastmcp>=3.0,<4.0
 sse-starlette>=2.0
 
