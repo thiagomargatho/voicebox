@@ -59,8 +59,14 @@ RUN if [ "$PYTORCH_VARIANT" = "rocm" ]; then \
         torch torchaudio && \
       printf '[global]\nindex-url = https://download.pytorch.org/whl/rocm%s\nextra-index-url = https://pypi.org/simple\n' "$ROCM_VERSION" > /etc/pip.conf; \
     else \
+      printf 'torch==2.7.1\ntorchaudio==2.7.1\n' > /etc/torch-pin.txt && \
+      printf '[install]\nconstraint = /etc/torch-pin.txt\n' > /etc/pip.conf && \
       pip install --no-cache-dir --prefix=/install torch==2.7.1 torchaudio==2.7.1; \
     fi
+# ^ The pin goes in a pip constraint: --prefix installs don't see each other, so
+#   without it the open `torch`/`torchaudio` in requirements.txt reinstall the
+#   latest over 2.7.1 (torch 2.14 + torchaudio 2.11, mismatched, no sox lib →
+#   qwen-tts fails to import).
 # ^ CPU builds pin torch: 2.8+ breaks CPU inference in every engine tested
 #   (Kokoro/LuxTTS: "Cannot copy out of meta tensor"; Qwen: "unsupported
 #   scalarType" in torch.autocast). 2.7.1 is the newest that works and matches
